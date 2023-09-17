@@ -2,10 +2,21 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import Spinner from "../components/Spinner"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { toast } from "react-toastify"
+import { v4 as uid } from "uuid"
+
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage"
+// import { storage } from "../../firebase.config"
 
 function CreateListings() {
   const [loading, setLoading] = useState(false)
-  const [geolocationEnabled, setGeolocationEnabled] = useState(true) // so humlog google geocoding ka use karne wale hai or agar wo nai hai to ye false hoga and humlog manual logitude and latitude dalenge
+  const [geolocationEnabled, setGeolocationEnabled] = useState(false) // so humlog google geocoding ka use karne wale hai or agar wo nai hai to ye false hoga and humlog manual longitude and latitude dalenge
   const [formData, setFormData] = useState({
     type: "rent",
     name: "",
@@ -18,7 +29,7 @@ function CreateListings() {
     regularPrice: 0,
     discountedPrice: 0,
     images: {},
-    logitude: 0,
+    longitude: 0,
     latitude: 0,
   })
 
@@ -34,19 +45,17 @@ function CreateListings() {
     regularPrice,
     discountedPrice,
     images,
-    logitude,
+    longitude,
     latitude,
   } = formData
   const auth = getAuth()
   const navigate = useNavigate()
 
-  const isMounted = useRef(true) // useRef ek aisa hook hai jiske andar ka state change hone pe rerender nai hota hai.
+  const isMounted = useRef(true)
 
   useEffect(() => {
     if (isMounted) {
       onAuthStateChanged(auth, (user) => {
-        /* sabse pehle hum yaha pe kya kar rahe hai ki hum dekhenge ki user loggedin hai ki nai, agar hai to  */
-
         if (user) {
           // user logged in
           setFormData({
@@ -62,18 +71,132 @@ function CreateListings() {
     return () => (isMounted.current = false) // on componentDidUnmount pe hum bataenge ki ismounted ko false kar do
   }, [isMounted])
 
-  const onMutate = (e) => {
-    /* so ye function alone will take care my entire formData  */
-    /* so hum yaha pe bohot jada lazyness dikha rahe hai. dimaag thik se kaam nai kar raha hai */
+  const onSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    if (discountedPrice >= regularPrice) {
+      toast.error("Discounted price needs to be less than regular price")
+      setLoading(false)
+      return
+    }
 
-    setFormData({
-      ...formData,
+    if (images.length > 6) {
+      setLoading(false)
+      toast.error("Max 6 images")
+      setLoading(false)
+      return
+    }
+
+    // // store images
+    // const storage = getStorage()
+    // const fileName = `${auth.currentUser.uid}-${images[0].name}-${uid()}`
+
+    // const imageRef = ref(storage, "images/" + fileName)
+
+    // new Promise((resolve, reject) => {
+    //   uploadBytes(imageRef, images[0].name)
+    // })
+    // //  uploadBytes(imageRef, images[0].name)
+    // console.log(images[0].name)
+
+    // // Store image in firebase
+    const storeImage = async (image) => {
+      return new Promise((resolve, reject) => {
+        const storage = getStorage()
+        const fileName = `${auth.currentUser.uid}-${image.name}-${uid()}`
+
+        const storageRef = ref(storage, "images/" + fileName)
+
+        const uploadTask = uploadBytesResumable(storageRef, image)
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            console.log("Upload is " + progress + "% done")
+            switch (snapshot.state) {
+              case "paused":
+                console.log("Upload is paused")
+                break
+              case "running":
+                console.log("Upload is running")
+                break
+              default:
+                break
+            }
+          },
+          (error) => {
+            reject(error)
+          },
+          () => {
+            // Handle successful uploads on complete
+            // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              resolve(downloadURL)
+            })
+          },
+        )
+      })
+    }
+
+    const imgUrls = await Promise.all(
+      [...images].map((image) => storeImage(image)),
+    ).catch(() => {
+      setLoading(false)
+      toast.error("Images not uploaded")
+      return
     })
 
-    /* so ye alone ek aisa function jo sare input type ko bhar sakta hai. */
+    let geolocation = {}
+    let location
 
-    /* ===============================================start from here */
-    /* this function contains too much logic thats why i will have to completely understand this function */
+    if (geolocationEnabled) {
+      const response = await fetch(
+        `https://geocode.maps.co/search?q=${address}`,
+      )
+      const data = await response.json()
+      // data will be undefined if there is no result
+      geolocation.lat = data[0]?.lat ?? 0
+      geolocation.lng = data[0]?.lon ?? 0
+      location = data[0]?.display_name
+      if (!location) {
+        setLoading(false)
+        toast.error("Please enter valid location")
+        return
+      }
+    } else {
+      geolocation.lat = latitude
+      geolocation.lng = longitude
+      location = address // reverse geolocation v use kr sakte hai
+      console.log(geolocation, location)
+    }
+
+    setLoading(false)
+  }
+
+  const onMutate = (e) => {
+    let bool = null
+    if (e.target.value === "true") bool = true
+
+    if (e.target.value === "false") bool = false
+
+    if (e.target.files) {
+      setFormData((prevState) => {
+        return {
+          ...prevState,
+          images: e.target.files, //its an array
+        }
+      })
+    }
+    if (!e.target.files) {
+      setFormData((prevState) => {
+        return {
+          ...prevState,
+          [e.target.id]: bool ?? e.target.value, // boolean or value
+        }
+      })
+    }
   }
 
   if (loading) {
@@ -86,13 +209,14 @@ function CreateListings() {
         <p className="pageHeader">Create Linstings</p>
       </header>
       <main>
-        <form>
+        <form onSubmit={onSubmit}>
           <label className="formLabel">Sell/Rent</label>
           <div className="formButtons">
             <button
               className={type === "sale" ? "formButtonActive" : "formButton"}
               type="button"
-              id="sale"
+              id="type"
+              value={"sale"}
               onClick={onMutate}
             >
               Sale
@@ -100,7 +224,8 @@ function CreateListings() {
             <button
               className={type === "rent" ? "formButtonActive" : "formButton"}
               type="button"
-              id="rent"
+              id="type"
+              value={"rent"}
               onClick={onMutate}
             >
               Rent
@@ -317,3 +442,11 @@ function CreateListings() {
   )
 }
 export default CreateListings
+
+// this project is really a good one and i need to really picturize it 
+
+
+/* what a big fucking file */
+
+
+/* this page is way to big */
