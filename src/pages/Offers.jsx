@@ -19,8 +19,11 @@ import ListingItem from "../components/ListingItem"
 function Offers() {
   const [listings, setListings] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [lastFetchedListing, setLastFetchedListing] = useState(null)
 
   const param = useParams()
+  /* so yaha pe humko snapShot mil gaya hai right 
+        now ab hum apna array create karenge  */
 
   useEffect(() => {
     const fetchListings = async () => {
@@ -33,13 +36,19 @@ function Offers() {
           listingsRef,
           where("offer", "==", true),
           orderBy("timestamp", "desc"),
-          limit(10),
+          limit(1),
+
+          //initially load 5 listings
         )
 
         const querySnap = await getDocs(q)
 
-        /* so yaha pe humko snapShot mil gaya hai right 
-        now ab hum apna array create karenge  */
+        // then get the listing length -1
+
+        const lastVisible = querySnap.docs[querySnap.docs.length - 1]
+
+        setLastFetchedListing(lastVisible)
+        console.log(lastVisible)
 
         const listings = []
 
@@ -48,9 +57,6 @@ function Offers() {
             id: doc.id,
             data: doc.data(),
           })
-
-          /* so maybe data ke andar sab kuch hai par id nai hai so uske liye humko ek workaround karna hoga
-           */
         })
         setListings(listings)
         setLoading(false)
@@ -60,6 +66,40 @@ function Offers() {
     }
     fetchListings()
   }, [])
+
+  const onFetchMoreListings = async () => {
+    try {
+      const listingsRef = collection(db, "listings")
+
+      /* Prepare a query  */
+
+      const q = query(
+        listingsRef,
+        where("offer", "==", true),
+        orderBy("timestamp", "desc"),
+        startAfter(lastFetchedListing),
+        limit(1),
+      )
+
+      const querySnap = await getDocs(q)
+      const lastVisible = querySnap.docs[querySnap.docs.length - 1]
+
+      setLastFetchedListing(lastVisible)
+
+      const listings = []
+
+      querySnap.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        })
+      })
+      setListings((prev) => {
+        return [...prev, ...listings]
+      })
+      setLoading(false)
+    } catch (error) {}
+  }
 
   return (
     <div className="category">
@@ -84,6 +124,13 @@ function Offers() {
               })}
             </ul>
           </main>
+          <br />
+          <br />
+          {lastFetchedListing && (
+            <p className="loadMore" onClick={onFetchMoreListings}>
+              Load More
+            </p>
+          )}
         </>
       ) : (
         <p>No Available Offers yet</p>
@@ -92,3 +139,8 @@ function Offers() {
   )
 }
 export default Offers
+
+
+/* create an array of 20 adress object */
+
+

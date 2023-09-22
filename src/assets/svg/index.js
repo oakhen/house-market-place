@@ -8,6 +8,7 @@ personOutlineIcon.svg
 shareIcon.svg        
 uploadIcon.svg
 visibilityIcon.svg
+editIcon.svg
  */
 
 export { ReactComponent as BadgeIcon } from "./badgeIcon.svg"
@@ -21,6 +22,7 @@ export { ReactComponent as ShareIcon } from "./shareIcon.svg"
 export { ReactComponent as UploadIcon } from "./uploadIcon.svg"
 export { ReactComponent as DeleteIcon } from "./deleteIcon.svg"
 export { ReactComponent as VisibilityIcon } from "./visibilityIcon.svg"
+export { ReactComponent as EditIcon } from "./editIcon.svg"
 // export { ReactComponent as GoogleIcon } from "./googleIcon.svg"
 // export { ReactComponent as FacebookIcon } from "./facebookIcon.svg"
 // export { ReactComponent as TwitterIcon } from "./twitterIcon.svg"

@@ -1,4 +1,4 @@
-/* export as default Offers Login Register Profile ForgotPassWord Category */
+/* export as default Offers Login Register Profile Contact ForgotPassWord Category */
 export { default as Oauth } from "./Oauth.jsx"
 export { default as Offers } from "./Offers.jsx"
 export { default as Explore } from "./Explore.jsx"
@@ -8,3 +8,6 @@ export { default as Profile } from "./Profile.jsx"
 export { default as ForgotPassWord } from "./ForgotPassWord.jsx"
 export { db } from "../../firebase.config.js"
 export { default as Category } from "./Category.jsx"
+export { default as Listing } from "./Listing.jsx"
+export { default as Contact } from "./Contact.jsx"
+export { default as EditListing } from "./EditListing.jsx"

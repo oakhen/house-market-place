@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom"
-import { DeleteIcon } from "../assets/svg"
+import { DeleteIcon, EditIcon } from "../assets/svg"
 
 import bedIcon from "../assets/svg/bedIcon.svg"
 /* import bathetubIcon */
 import bathtubIcon from "../assets/svg/bathtubIcon.svg"
 
-function ListingItem({ listing, id, onDelete }) {
+function ListingItem({ listing, id, onDelete, onEdit }) {
   return (
     <li className="categoryListing">
       <Link
@@ -63,6 +63,14 @@ function ListingItem({ listing, id, onDelete }) {
           onClick={() => onDelete(listing.id, listing.name)}
           className="removeIcon"
           fill="rgb(231,76,60)"
+        />
+      )}
+      {onEdit && (
+        <EditIcon
+          className="editIcon"
+          onClick={() => {
+            onEdit(id)
+          }}
         />
       )}
     </li>

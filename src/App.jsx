@@ -8,6 +8,9 @@ import {
   Profile,
   ForgotPassWord,
   Category,
+  Listing,
+  Contact,
+  EditListing,
 } from "./pages"
 import NavBar from "./components/NavBar"
 import { ToastContainer } from "react-toastify"
@@ -26,10 +29,21 @@ function App() {
         <Route exact path="/register" element={<Register />} />
         <Route exact path="/category/:categoryName" element={<Category />} />
         <Route exact path="/create-listing" element={<CreateListings />} />
+        <Route
+          exact
+          path="/Edit-listing/:listingId"
+          element={<EditListing />}
+        />
         <Route exact path="/profile" element={<PrivateRoute />}>
           <Route exact path="/profile" element={<Profile />} />
         </Route>
         <Route exact path="/forgot-password" element={<ForgotPassWord />} />
+        <Route exact path="/contact/:landlordId" element={<Contact />} />
+        <Route
+          exact
+          path="/category/:categoryName/:listingId"
+          element={<Listing />}
+        />
       </Routes>
       <NavBar />
       <ToastContainer />

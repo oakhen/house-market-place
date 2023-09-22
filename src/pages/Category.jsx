@@ -20,6 +20,7 @@ import ListingItem from "../components/ListingItem"
 function Category() {
   const [listings, setListings] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [lastFetchedListing, setLastFetchedListing] = useState(null)
 
   const param = useParams()
 
@@ -39,9 +40,8 @@ function Category() {
 
         const querySnap = await getDocs(q)
 
-        /* so yaha pe humko snapShot mil gaya hai right 
-        now ab hum apna array create karenge  */
-
+        const lastVisible = querySnap.docs[querySnap.docs.length - 1]
+        setLastFetchedListing(lastVisible)
         const listings = []
 
         querySnap.forEach((doc) => {
@@ -49,9 +49,6 @@ function Category() {
             id: doc.id,
             data: doc.data(),
           })
-
-          /* so maybe data ke andar sab kuch hai par id nai hai so uske liye humko ek workaround karna hoga
-           */
         })
         setListings(listings)
         setLoading(false)
@@ -62,6 +59,40 @@ function Category() {
     fetchListings()
   }, [param.categoryName])
 
+  const onLoadMore = async () => {
+    try {
+      const listingsRef = collection(db, "listings")
+
+      /* Prepare a query  */
+
+      const q = query(
+        listingsRef,
+        where("type", "==", param.categoryName),
+        orderBy("timestamp", "desc"),
+        startAfter(lastFetchedListing),
+        limit(3),
+      )
+
+      const querySnap = await getDocs(q)
+      const lastVisible = querySnap.docs[querySnap.docs.length - 1]
+
+      setLastFetchedListing(lastVisible)
+      const listings = []
+
+      querySnap.forEach((doc) => {
+        return listings.push({
+          id: doc.id,
+          data: doc.data(),
+        })
+      })
+      setListings((prev) => {
+        return [...prev, ...listings]
+      })
+      setLoading(false)
+    } catch (error) {
+      console.log(error)
+    }
+  }
   return (
     <div className="category">
       <header>
@@ -87,6 +118,13 @@ function Category() {
               })}
             </ul>
           </main>
+          <br />
+          <br />
+          {lastFetchedListing && (
+            <p className="loadMore" onClick={onLoadMore}>
+              Load More
+            </p>
+          )}
         </>
       ) : (
         <p>No listings for {param.categoryName}</p>

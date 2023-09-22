@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
-import Spinner from "../components/Spinner"
+import { useNavigate, useParams } from "react-router-dom"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
 import { toast } from "react-toastify"
 import { v4 as uid } from "uuid"
+import Spinner from "../components/Spinner"
 
 import {
   getStorage,
@@ -11,12 +11,14 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage"
-import { serverTimestamp, collection, addDoc } from "firebase/firestore"
+import { serverTimestamp, getDoc, doc, updateDoc } from "firebase/firestore"
 import { db } from "../../firebase.config"
 
-function CreateListings() {
+function EditListing() {
   const [loading, setLoading] = useState(false)
-  const [geolocationEnabled, setGeolocationEnabled] = useState(true) // so humlog google geocoding ka use karne wale hai or agar wo nai hai to ye false hoga and humlog manual longitude and latitude dalenge
+  const [geolocationEnabled, setGeolocationEnabled] = useState(true)
+  const [listing, setListing] = useState(null)
+
   const [formData, setFormData] = useState({
     type: "rent",
     name: "",
@@ -50,6 +52,30 @@ function CreateListings() {
   } = formData
   const auth = getAuth()
   const navigate = useNavigate()
+  const { listingId } = useParams()
+
+  useEffect(() => {
+    if (listing && listing.user !== listingId) {
+      toast.error("You cannot edit the listing")
+      navigate("/")
+    }
+  }, [listingId])
+
+  useEffect(() => {
+    const fetchUserListing = async () => {
+      const docRef = doc(db, "listings", listingId)
+      const docSnap = await getDoc(docRef)
+      if (docSnap.exists()) {
+        setListing(docSnap.data())
+        setFormData({ ...docSnap.data(), address: docSnap.data().location })
+        setLoading(false)
+      } else {
+        navigate("/")
+        toast.error("Listing not found")
+      }
+    }
+    fetchUserListing()
+  }, [listingId, navigate])
 
   const isMounted = useRef(true)
 
@@ -142,7 +168,7 @@ function CreateListings() {
         `https://geocode.maps.co/search?q=${address}`,
       )
       const data = await response.json()
-      // data will be undefined if there is no result
+
       geolocation.lat = data[0]?.lat ?? 0
       geolocation.lng = data[0]?.lon ?? 0
       location = data[0]?.display_name
@@ -155,7 +181,6 @@ function CreateListings() {
       geolocation.lat = latitude
       geolocation.lng = longitude
       location = address // reverse geolocation v use kr sakte hai
-      console.log(geolocation, location)
     }
     // copy of the data object
     const formDataCopy = {
@@ -171,10 +196,10 @@ function CreateListings() {
     delete formDataCopy.address // that we will get from geolocations
     location && (formDataCopy.location = location) // location is fetched from geolocations or set to manual adress
     !formDataCopy.offer && delete formDataCopy.discountedPrice
-    // offer is false we dont want discountedPrice
-    // prepare to upload on firebase
-    const docRef = await addDoc(collection(db, "listings"), formDataCopy)
 
+    const docRef = doc(db, "listings", listingId)
+
+    const updateListing = await updateDoc(docRef, formDataCopy)
     setLoading(false)
     toast.success("Listing created")
     navigate(`/category/${formDataCopy.type}/${docRef.id}`)
@@ -212,7 +237,7 @@ function CreateListings() {
   return (
     <div className="profile">
       <header>
-        <p className="pageHeader">Create Linstings</p>
+        <p className="pageHeader">Edit Linstings</p>
       </header>
       <main>
         <form onSubmit={onSubmit}>
@@ -437,22 +462,13 @@ function CreateListings() {
             multiple
             required
           />
-
-          {/* input type file pe kavi kaam nai kiye the this is interesting */}
           <button type="submit" className="primaryButton createListingButton">
-            Create Listing
+            Edit Listing
           </button>
         </form>
       </main>
     </div>
   )
 }
-export default CreateListings
 
-// this project is really a good one and i need to really picturize it 
-
-
-/* what a big fucking file */
-
-
-/* this page is way to big */
+export default EditListing

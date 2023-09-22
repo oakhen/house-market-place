@@ -8,8 +8,6 @@ function Oauth() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  /* so jo yaha pe hum kr rahe hai usse humko lightly samajh aya hai. */
-
   const onGoogleAuth = async () => {
     try {
       const auth = getAuth()
