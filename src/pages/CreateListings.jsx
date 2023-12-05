@@ -449,10 +449,31 @@ function CreateListings() {
 }
 export default CreateListings
 
-// this project is really a good one and i need to really picturize it 
-
+// this project is really a good one and i need to really picturize it
 
 /* what a big fucking file */
 
-
 /* this page is way to big */
+
+
+
+
+// create an arry of user with adress with full name and full adress
+
+
+// create an arry of full actual adress 
+
+// const addresses = [
+//   { address: "1600 Amphitheatre Parkway, Mountain View, CA", geocode: "37.422, -122.084" },
+//   { address: "1 Infinite Loop, Cupertino, CA", geocode: "37.3318, -122.0312" },
+//   { address: "1 Microsoft Way, Redmond, WA", geocode: "47.640, -122.129" },
+//   { address: "1 Hacker Way, Menlo Park, CA", geocode: "37.484, -122.148" },
+//   { address: "1355 Market Street, San Francisco, CA", geocode: "37.7763, -122.4167" },
+//   { address: "270 Lafayette Street, New York, NY", geocode: "40.7242, -73.9976" },
+//   { address: "1 Apple Park Way, Cupertino, CA", geocode: "37.3349, -122.009" },
+//   { address: "1 World Trade Center, New York, NY", geocode: "40.713, -74.013" },
+//   { address: "1 Letterman Drive, San Francisco, CA", geocode: "37.7993, -122.448" },
+//   { address: "315 Park Avenue South, New York, NY", geocode: "40.7413, -73.9856" }
+// ]
+
+

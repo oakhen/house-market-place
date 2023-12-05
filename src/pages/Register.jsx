@@ -54,7 +54,7 @@ function Register() {
       setDoc(doc(db, "users", user.uid), formDataCopy)
       navigate("/")
     } catch (error) {
-      toast.error("Something went wrong")
+      toast.error("Something went wrong ,may be password too small")
       console.log(error)
     }
   }
@@ -120,7 +120,7 @@ function Register() {
         <Oauth />
 
         <Link className="registerLink" to={"/login"}>
-          Sign up Instead
+          Sign In Instead
         </Link>
       </div>
     </>

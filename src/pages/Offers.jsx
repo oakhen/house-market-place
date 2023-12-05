@@ -36,7 +36,7 @@ function Offers() {
           listingsRef,
           where("offer", "==", true),
           orderBy("timestamp", "desc"),
-          limit(1),
+          limit(3),
 
           //initially load 5 listings
         )
@@ -78,7 +78,7 @@ function Offers() {
         where("offer", "==", true),
         orderBy("timestamp", "desc"),
         startAfter(lastFetchedListing),
-        limit(1),
+        limit(2),
       )
 
       const querySnap = await getDocs(q)
